@@ -6,18 +6,19 @@ import {JSDOM} from 'jsdom';
 
 const records=Array.from({length:120},(_,i)=>({id:`360:${1000+i}`,source:'360',sourceId:String(1000+i),category:'9',name:`风景 ${i+1}`,tags:['风景',String(i+1)],width:2560,height:1440,resolution:'2560 × 1440',quality:'QHD',original:`https://p2.qhimg.com/bdr/__85/t01${1000+i}.jpg`,image:`https://p2.qhimg.com/bdm/1920_1080_85/t01${1000+i}.jpg`,thumb:`https://p2.qhimg.com/bdm/320_200_75/t01${1000+i}.jpg`,credit:'图片来源：360 壁纸',createdAt:'2022-01-18 12:00:00',downloadable:true}));
 async function until(check){for(let i=0;i<100;i++){if(check())return;await tick()}throw Error('Application did not settle')}
-async function boot(t,{playResult=()=>Promise.resolve(),cache=null,storageFails=false,onCatalogRequest=()=>{}}={}){
+async function boot(t,{playResult=()=>Promise.resolve(),cache=null,storageFails=false,onCatalogRequest=()=>{},pagePath='/',php=false}={}){
  const html=await readFile(new URL('../index.html',import.meta.url),'utf8');
- const dom=new JSDOM(html,{url:'http://localhost:4178/',pretendToBeVisual:true});const {window}=dom,doc=window.document;
+ const dom=new JSDOM(html,{url:'http://localhost:4178'+pagePath,pretendToBeVisual:true});const {window}=dom,doc=window.document;
  if(cache!==null)window.localStorage.setItem('stillscape-api-cache-v1',JSON.stringify(cache));
  if(storageFails)window.Storage.prototype.setItem=function(){throw Error('Quota exceeded')};
+ if(php)doc.documentElement.dataset.api='php';
  const requests=[];
  const originals=new Map();let disposed=false;const timers=new Set(),gates=new Map();const realSet=globalThis.setTimeout,realClear=globalThis.clearTimeout;
  function install(key,value){originals.set(key,Object.getOwnPropertyDescriptor(globalThis,key));Object.defineProperty(globalThis,key,{value,writable:true,configurable:true})}
  for(const [key,value] of Object.entries({window,document:doc,localStorage:window.localStorage,innerWidth:1440,innerHeight:900,matchMedia:query=>({matches:query.includes('reduced-motion'),addEventListener(){}}),requestAnimationFrame:callback=>realSet(()=>{if(!disposed)callback(performance.now())},0),cancelAnimationFrame:realClear}))install(key,value);
  install('setTimeout',(callback,ms,...args)=>{const timer=realSet(()=>{timers.delete(timer);if(!disposed)callback(...args)},ms);timers.add(timer);return timer});
  install('clearTimeout',timer=>{timers.delete(timer);realClear(timer)});
- install('fetch',async input=>{requests.push(String(input));const url=new URL(String(input),'http://localhost');if(url.pathname==='/api/categories')return Response.json({categories:[{id:'9',name:'风景大片'}]});if(url.pathname==='/api/wallpapers'){onCatalogRequest(doc);const start=Number(url.searchParams.get('start')||0),count=Number(url.searchParams.get('count')||24),items=records.slice(start,start+count);return Response.json({items,total:120,nextStart:start+items.length,hasMore:start+items.length<120})}throw Error('Unexpected fixture request: '+url.pathname)});
+ install('fetch',async input=>{const url=new URL(String(input),doc.baseURI);requests.push(url.href);const apiPath=url.pathname.endsWith('/api/index.php')?'/api/'+url.searchParams.get('route'):url.pathname.startsWith('/img/')?url.pathname.slice(4):url.pathname;if(apiPath==='/api/categories')return Response.json({categories:[{id:'9',name:'风景大片'}]});if(apiPath==='/api/wallpapers'){onCatalogRequest(doc);const start=Number(url.searchParams.get('start')||0),count=Number(url.searchParams.get('count')||24),items=records.slice(start,start+count);return Response.json({items,total:120,nextStart:start+items.length,hasMore:start+items.length<120})}throw Error('Unexpected fixture request: '+url.pathname)});
  install('Image',function(){const image=doc.createElement('img');image.decode=()=>gates.get(image.getAttribute('src'))?.promise||Promise.resolve();return image});
  window.HTMLElement.prototype.animate=function(){return {cancel(){},pause(){},play(){},finished:Promise.resolve()}};
  const paused=new WeakMap();window.HTMLMediaElement.prototype.play=function(){return playResult().then(()=>{paused.set(this,false)})};window.HTMLMediaElement.prototype.pause=function(){paused.set(this,true)};Object.defineProperty(window.HTMLMediaElement.prototype,'paused',{get(){return paused.get(this)??true}});
@@ -121,4 +122,19 @@ test('thumbnail skeletons clear independently on load or failure without changin
  const {doc}=await boot(t),first=doc.querySelector('.film[data-index="0"]'),second=doc.querySelector('.film[data-index="1"]');assert.equal(first.classList.contains('is-loading'),true);assert.equal(second.classList.contains('is-loading'),true);
  first.querySelector('img').dispatchEvent(new doc.defaultView.Event('load'));assert.equal(first.classList.contains('is-loading'),false);assert.equal(second.classList.contains('is-loading'),true);assert.equal(first.getAttribute('aria-pressed'),'true');
  second.querySelector('img').dispatchEvent(new doc.defaultView.Event('error'));assert.equal(second.classList.contains('is-loading'),false);assert.equal(first.getAttribute('aria-pressed'),'true');
+});
+
+
+test('subdirectory browsing, pagination, downloads and music stay under the page mount',async t=>{
+ const app=await boot(t,{pagePath:'/img/'});assert.ok(app.requests.every(url=>new URL(url).pathname.startsWith('/img/api/')),'catalog requests must not escape to the main site API');
+ await app.append(48);assert.equal(new URL(app.requests.at(-1)).pathname,'/img/api/wallpapers');assert.equal(new URL(app.requests.at(-1)).searchParams.get('start'),'24');
+ const {doc}=app;doc.querySelector('#download-dialog').showModal=function(){this.setAttribute('open','')};doc.querySelector('#download-button').click();assert.equal(new URL(doc.querySelector('#confirm-download').href).pathname,'/img/api/download');
+ doc.querySelector('#music-toggle').click();await until(()=>doc.querySelector('#music-toggle').getAttribute('aria-pressed')==='true');assert.equal(new URL(doc.querySelector('#ambient-audio').src).pathname,'/img/assets/ambient-music.mp3');
+});
+
+
+test('PHP upload build routes catalog, pagination and downloads through the local PHP entry',async t=>{
+ const app=await boot(t,{pagePath:'/img/',php:true});assert.ok(app.requests.every(url=>new URL(url).pathname==='/img/api/index.php'));assert.deepEqual(app.requests.map(url=>new URL(url).searchParams.get('route')),['categories','wallpapers']);
+ await app.append(48);const next=new URL(app.requests.at(-1));assert.equal(next.searchParams.get('route'),'wallpapers');assert.equal(next.searchParams.get('start'),'24');
+ const {doc}=app;doc.querySelector('#download-dialog').showModal=function(){};doc.querySelector('#download-button').click();const download=new URL(doc.querySelector('#confirm-download').href);assert.equal(download.pathname,'/img/api/index.php');assert.equal(download.searchParams.get('route'),'download');assert.equal(download.searchParams.get('url'),records[0].original);assert.equal(download.searchParams.get('size'),'original');
 });

@@ -6,7 +6,7 @@
 
 - 项目：[mengkunsoft/wallpaper](https://github.com/mengkunsoft/wallpaper)
 - 参考范围：[API 实现](https://github.com/mengkunsoft/wallpaper/blob/master/api/index.php) 中 360 壁纸分类、分类分页与 Bing 每日图片的接口调用方式。
-- 本项目的界面与 Node.js 服务独立实现；未将参考项目的页面代码或 PHP 代理作为项目文件引入。
+- 本项目的界面与 Node.js / PHP 服务独立实现；未将参考项目的页面代码或 PHP 代理作为项目文件引入。
 - 原项目版权及其 README 中的使用要求归原作者所有；本仓库 MIT 许可证不覆盖原项目。
 
 ## 2. 壁纸与摄影
@@ -32,7 +32,7 @@
 
 ## 4. 设计 Skill 与开发工具
 
-网站设计与界面打磨使用项目作者自有的「官网设计」Skill（`guanwang`，早期名称 `website-ui-craft`），配合 Codex 完成。该 Skill 计划独立开源，目前未包含在本仓库，其后续链接见 [README 的设计 Skill 说明](README.md#自有设计-skill)。
+网站设计与界面打磨使用项目作者自有的「官网设计」Skill（`guanwang`，早期名称 `website-ui-craft`），配合 Codex 完成。该 Skill 计划独立开源，目前未包含在本仓库，其后续链接见 [README 的设计 Skill 说明](https://github.com/zcjunblog/stillscape#自有设计-skill)。
 
 第三方开发依赖以 `package.json`、`package-lock.json` 记录为准，各依赖遵循其自身许可证。本项目名称以外的第三方名称与标识归各自权利人所有。
 

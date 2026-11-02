@@ -10,7 +10,8 @@
     "start": "node server.mjs",
     "test": "node --test test/*.test.mjs",
     "build": "node build.mjs",
-    "preview": "node dist/shijing/server.mjs"
+    "preview": "node dist/shijing/server.mjs",
+    "build:php": "node build.mjs --php"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
@@ -18,7 +19,7 @@
   },
   "description": "An immersive wallpaper gallery with quiet motion, real image feeds and ambient music.",
   "license": "MIT",
-  "homepage": "https://github.com/zcjunblog/stillscape",
+  "homepage": "https://xss6.com/img/",
   "repository": {
     "type": "git",
     "url": "https://github.com/zcjunblog/stillscape.git"

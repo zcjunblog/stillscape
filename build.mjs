@@ -3,7 +3,7 @@ import {join,parse} from 'node:path';
 import {createHash} from 'node:crypto';
 import {gzipSync,brotliCompressSync,constants} from 'node:zlib';
 import {transform} from 'esbuild';
-const dest='dist/shijing',sizes=[];
+const php=process.argv.includes('--php'),dest=php?'dist/php-img':'dist/shijing',sizes=[];
 await rm(dest,{recursive:true,force:true});await mkdir(join(dest,'assets'),{recursive:true});
 async function output(name,data,{fingerprinted=false,text=false,originalBytes=data.length}={}){
  if(fingerprinted){const {name:stem,ext}=parse(name),hash=createHash('sha256').update(data).digest('hex').slice(0,12);name=`assets/${stem}.${hash}${ext}`}
@@ -16,8 +16,15 @@ const music=await output('ambient-music.mp3',await readFile('assets/ambient-musi
 const css=await readFile('style.css','utf8'),js=await readFile('app.js','utf8');
 const style=await output('style.css',(await transform(css,{loader:'css',minify:true,target:'es2022',legalComments:'none',charset:'utf8'})).code,{fingerprinted:true,text:true,originalBytes:Buffer.byteLength(css)});
 const app=await output('app.js',(await transform(js.replaceAll('assets/ambient-music.mp3',music),{loader:'js',minify:true,target:'es2022',legalComments:'none',charset:'utf8'})).code,{fingerprinted:true,text:true,originalBytes:Buffer.byteLength(js)});
-const html=await readFile('index.html','utf8');await output('index.html',html.replaceAll('assets/scene-12.jpg',image).replace('href="style.css"',`href="${style}"`).replace('src="app.js"',`src="${app}"`),{text:true,originalBytes:Buffer.byteLength(html)});
-for(const file of ['api.mjs','server.mjs','LICENSE','THIRD_PARTY.md'])await copyFile(file,join(dest,file));
-await writeFile(join(dest,'README.md'),(await readFile('README.md','utf8')).replace(/!\[Stillscape 预览\]\(docs\/preview\.png\)\n/,''));
-const pkg=JSON.parse(await readFile('package.json','utf8'));for(const script of ['test','build','preview'])delete pkg.scripts[script];delete pkg.devDependencies;await writeFile(join(dest,'package.json'),JSON.stringify(pkg,null,2)+'\n');
-await mkdir('qa',{recursive:true});await writeFile('qa/build-sizes.json',JSON.stringify({assets:sizes},null,2)+'\n');console.log(dest);
+let html=await readFile('index.html','utf8');if(php)html=html.replace('<html lang="zh-CN">','<html lang="zh-CN" data-api="php">');await output('index.html',html.replaceAll('assets/scene-12.jpg',image).replace('href="style.css"',`href="${style}"`).replace('src="app.js"',`src="${app}"`),{text:true,originalBytes:Buffer.byteLength(html)});
+for(const file of ['LICENSE','THIRD_PARTY.md'])await copyFile(file,join(dest,file));
+if(php){
+ await mkdir(join(dest,'api'),{recursive:true});for(const file of ['index.php','api.php'])await copyFile(join('php',file),join(dest,'api',file));
+ await copyFile('deploy/php.md',join(dest,'DEPLOY.md'));
+}else{
+ for(const file of ['api.mjs','server.mjs'])await copyFile(file,join(dest,file));
+ await writeFile(join(dest,'README.md'),(await readFile('README.md','utf8')).replace(/!\[Stillscape 预览\]\(docs\/preview\.png\)\n/,''));
+ await mkdir(join(dest,'deploy'),{recursive:true});for(const file of ['README.md','nginx-img.conf','php.md'])await copyFile(join('deploy',file),join(dest,'deploy',file));
+ const pkg=JSON.parse(await readFile('package.json','utf8'));for(const script of ['test','build','build:php','preview'])delete pkg.scripts[script];delete pkg.devDependencies;await writeFile(join(dest,'package.json'),JSON.stringify(pkg,null,2)+'\n');
+}
+await mkdir('qa',{recursive:true});await writeFile(php?'qa/php-build-sizes.json':'qa/build-sizes.json',JSON.stringify({assets:sizes},null,2)+'\n');console.log(dest);

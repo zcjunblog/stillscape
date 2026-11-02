@@ -17,3 +17,11 @@ test('release references content-hashed assets with matching precompressed repre
  }
  const js=await readFile(new URL(script,root),'utf8'),music=/assets\/ambient-music\.[a-f0-9]{12}\.mp3/.exec(js)?.[0];assert.ok(music);assert.deepEqual(await readFile(new URL(music,root)),await readFile(new URL('../assets/ambient-music.mp3',import.meta.url)));
 });
+
+test('PHP build contains an upload-ready entry and no Node runtime files',async()=>{
+ await promisify(execFile)(process.execPath,['build.mjs','--php'],{cwd:new URL('..',import.meta.url)});
+ const root=new URL('../dist/php-img/',import.meta.url),html=await readFile(new URL('index.html',root),'utf8');assert.match(html,/<html[^>]+data-api="php"/);
+ for(const path of ['api/index.php','api/api.php','DEPLOY.md','LICENSE','THIRD_PARTY.md'])assert.ok((await readFile(new URL(path,root))).length);
+ const {readdir}=await import('node:fs/promises');const entries=await readdir(root);for(const name of ['server.mjs','api.mjs','package.json','node_modules'])assert.equal(entries.includes(name),false);
+ const script=/src="(assets\/app\.[a-f0-9]{12}\.js)"/.exec(html)?.[1];assert.ok(script);assert.deepEqual(brotliDecompressSync(await readFile(new URL(script+'.br',root))),await readFile(new URL(script,root)));
+});
