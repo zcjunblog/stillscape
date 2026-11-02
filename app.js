@@ -53,7 +53,7 @@ async function loadCatalog(category,{append=false}={}){
   const items=result.items.map(decorate);const existing=append?catalog.items:[];const known=new Set(existing.map(scene=>scene.id));let combined=[...existing,...items.filter(scene=>{if(known.has(scene.id))return false;known.add(scene.id);return true})];
   if(!append&&category==='9'){const lead=combined.find(scene=>scene.sourceId==='2054148');if(lead)combined=[lead,...combined.filter(scene=>scene!==lead)]}
   catalog={category,items:combined,total:result.total,nextStart:result.nextStart,hasMore:result.hasMore,loading:false,error:''};
-  $('#catalog-count').textContent=countLabel(result.total);if(!append){playlist='catalog';scenes=[...combined];active=0;pending=0;renderFilm();if(scenes.length)await switchScene(0,true);else toast('这个分类暂时没有图片。')}else if(playlist==='catalog'){scenes=[...combined];renderFilm({append:true})}
+  $('#catalog-count').textContent=countLabel(result.total);if(!append){playlist='catalog';scenes=[...combined];active=0;pending=0;renderFilm();if(scenes.length)await switchScene(0,true);else toast('这个分类暂时没有图片。')}else if(playlist==='catalog'){scenes=[...combined];renderFilm({append:true});preloadNext()}
   if(token!==catalogRequest)return false;migrateFavorites();renderLibrary();return true;
  }catch(error){if(token!==catalogRequest)return false;catalog.loading=false;catalog.error=ownController.signal.aborted?'连接超时，请重新加载。':error.message;renderLibrary();updateFilmPaging();$('#catalog-retry').hidden=!!currentScene;if(!currentScene){$('#scene-title').textContent='风景暂未抵达';$('#scene-description').textContent=catalog.error;renderFilm()}toast(catalog.error);return false}
  finally{clearTimeout(timeout)}
@@ -76,12 +76,45 @@ function syncScene(scene,index,animateText=true){currentScene=scene;$('#scene-ti
 function setFilm(index,{scroll=true}={}){selectedFilmId=scenes[index]?.id??null;let selectedButton=null;filmstrip.querySelectorAll('.film').forEach(button=>{const selected=button.dataset.sceneId===selectedFilmId;button.setAttribute('aria-pressed',String(selected));if(selected)selectedButton=button});if(!scroll||!selectedButton)return;const target=Math.max(0,selectedButton.offsetLeft-filmstrip.offsetLeft-filmstrip.clientWidth/2+selectedButton.offsetWidth/2);filmstrip.scrollTo({left:target,behavior:motionOn()?'smooth':'instant'})}
 function cleanFrames(){camera.querySelectorAll('.scene-frame').forEach(frame=>{if(frame!==activeFrame)frame.remove()});activeFrame.style.opacity='1';fade?.cancel();fade=null}
 function startPan(image){photoAnimation?.cancel();if(!motionOn()||!image)return;photoAnimation=image.animate([{transform:'scale(1.065)'},{transform:'scale(1.005)'}],{duration:14000,easing:'cubic-bezier(.18,.62,.24,1)',fill:'forwards'});if(document.hidden)photoAnimation.pause()}
-async function switchScene(index,force=false){if(!scenes.length)return false;index=(index+scenes.length)%scenes.length;const scene=scenes[index];pending=index;const token=++sceneRequest;if(!force&&scene.id===currentScene?.id&&!fade){active=index;setFilm(index);$('#loading-state').hidden=true;return true}setFilm(index);const loadingTimer=setTimeout(()=>{if(token===sceneRequest)$('#loading-state').hidden=false},200);const image=new Image();image.className='scene-photo';image.alt='';image.referrerPolicy='no-referrer';image.src=photo(scene);
- try{await image.decode()}catch{clearTimeout(loadingTimer);if(token===sceneRequest){$('#loading-state').hidden=true;const oldIndex=scenes.findIndex(item=>item.id===currentScene?.id);pending=active=Math.max(0,oldIndex);setFilm(oldIndex);toast('图片暂时无法打开，请尝试下一张。')}return false}
- clearTimeout(loadingTimer);if(token!==sceneRequest)return false;$('#loading-state').hidden=true;cleanFrames();const oldFrame=activeFrame,frame=document.createElement('div');frame.className='scene-frame current';frame.append(image);camera.append(frame);activeFrame=frame;active=index;syncScene(scene,index);setFilm(index,{scroll:false});startPan(image);
- if(motionOn()){fade=frame.animate([{opacity:0},{opacity:1}],{duration:1150,easing:'cubic-bezier(.25,.1,.25,1)',fill:'forwards'});const ownFade=fade;ownFade.finished.then(()=>{if(fade===ownFade){frame.style.opacity='1';oldFrame.remove();ownFade.cancel();fade=null}}).catch(()=>{})}else oldFrame.remove();scheduleAutoplay();preloadNext();if(library.open)renderLibrary();return true;
+// Reuse decoded photos and keep speculative downloads behind the requested image.
+const photoPool=new Map();let warmQueue=[],warming=false,intentTimer=null;
+const photoLimit=()=>innerWidth<=760?4:8;
+function trimPhotos(keep){while(photoPool.size>photoLimit()){const key=[...photoPool.keys()].find(url=>url!==keep&&url!==activeFrame.querySelector('img')?.getAttribute('src'));if(!key)break;photoPool.delete(key)}}
+function preparePhoto(scene,priority='high'){
+ const url=photo(scene),cached=photoPool.get(url);
+ if(cached){photoPool.delete(url);photoPool.set(url,cached);if(priority==='high')cached.image.fetchPriority='high';return cached}
+ const image=new Image();image.className='scene-photo';image.alt='';image.referrerPolicy='no-referrer';image.decoding='async';image.fetchPriority=priority;
+ const entry={image,ready:false,promise:null};photoPool.set(url,entry);image.src=url;
+ entry.promise=image.decode().then(()=>{entry.ready=true;trimPhotos(url);return image},error=>{if(photoPool.get(url)===entry)photoPool.delete(url);throw error});trimPhotos(url);return entry;
 }
-function preloadNext(){if(!scenes.length)return;const preload=new Image();preload.referrerPolicy='no-referrer';preload.src=photo(scenes[(active+1)%scenes.length])}
+async function runWarmQueue(){if(warming)return;warming=true;try{while(warmQueue.length){const scene=warmQueue.shift();if(photoPool.has(photo(scene)))continue;try{await preparePhoto(scene,'low').promise}catch{}}}finally{warming=false}}
+function preloadNext(){
+ const connection=window.navigator.connection;if(!scenes.length||document.hidden||connection?.saveData||/2g/.test(connection?.effectiveType||'')){warmQueue=[];return}
+ const offsets=innerWidth<=760?[1,-1]:[1,2,-1];warmQueue=offsets.map(offset=>scenes[(active+offset+scenes.length)%scenes.length]).filter(scene=>scene&&scene.id!==currentScene?.id&&!photoPool.has(photo(scene)));runWarmQueue();
+}
+function showSceneFrame(image,scene,index,{preview=false}={}){
+ cleanFrames();const oldFrame=activeFrame,frame=document.createElement('div');frame.className='scene-frame current';frame.dataset.preview=String(preview);frame.append(image);camera.append(frame);activeFrame=frame;active=index;syncScene(scene,index);setFilm(index,{scroll:false});startPan(image);
+ if(motionOn()){fade=frame.animate([{opacity:0},{opacity:1}],{duration:1150,easing:'cubic-bezier(.25,.1,.25,1)',fill:'forwards'});const ownFade=fade;ownFade.finished.then(()=>{if(fade===ownFade){frame.style.opacity='1';oldFrame.remove();ownFade.cancel();fade=null}}).catch(()=>{})}else oldFrame.remove();return frame;
+}
+async function switchScene(index,force=false){
+ if(!scenes.length)return false;index=(index+scenes.length)%scenes.length;const scene=scenes[index];pending=index;const token=++sceneRequest;setFilm(index);
+ if(currentScene&&activeFrame.querySelector('img')?.getAttribute('src')===photo(scene)){active=index;syncScene(scene,index,false);$('#loading-state').hidden=true;preloadNext();return true}
+ const entry=preparePhoto(scene);let previewFrame=null;
+ const thumbnail=[...filmstrip.querySelectorAll('.film')].find(button=>button.dataset.sceneId===scene.id)?.querySelector('img');
+ if(!entry.ready&&thumbnail?.complete&&thumbnail.naturalWidth>0){const preview=thumbnail.cloneNode();preview.className='scene-photo scene-photo-preview';preview.loading='eager';previewFrame=showSceneFrame(preview,scene,index,{preview:true})}
+ $('#loading-state').hidden=true;const loadingTimer=setTimeout(()=>{if(token===sceneRequest&&!previewFrame)$('#loading-state').hidden=false},500);let image;
+ try{image=await entry.promise}catch{clearTimeout(loadingTimer);if(token===sceneRequest){$('#loading-state').hidden=true;if(previewFrame)toast('高清图片暂未抵达，可先欣赏预览。');else{const oldIndex=scenes.findIndex(item=>item.id===currentScene?.id);pending=active=Math.max(0,oldIndex);setFilm(oldIndex);toast('图片暂时无法打开，请尝试下一张。')}}return false}
+ clearTimeout(loadingTimer);if(token!==sceneRequest)return false;$('#loading-state').hidden=true;
+ if(previewFrame&&activeFrame===previewFrame){const preview=previewFrame.querySelector('img');previewFrame.append(image);previewFrame.dataset.preview='false';startPan(image);if(motionOn()){const reveal=image.animate([{opacity:0},{opacity:1}],{duration:420,easing:'ease-out'});reveal.finished.then(()=>preview.remove()).catch(()=>preview.remove())}else preview.remove()}else showSceneFrame(image,scene,index);
+ scheduleAutoplay();preloadNext();if(library.open)renderLibrary();return true;
+}
+function warmIntent(event){
+ const button=event.target.closest('.film,[data-id]');if(!button||event.type==='pointerover'&&button.contains(event.relatedTarget))return;
+ const connection=window.navigator.connection;if(connection?.saveData||/2g/.test(connection?.effectiveType||''))return;
+ const scene=button.classList.contains('film')?scenes[Number(button.dataset.index)]:[...catalog.items,...saved.values()].find(scene=>scene.id===button.dataset.id);
+ clearTimeout(intentTimer);if(scene)intentTimer=setTimeout(()=>{if(photoPool.has(photo(scene)))return;warmQueue=[scene,...warmQueue.filter(item=>item.id!==scene.id)].slice(0,3);runWarmQueue()},event.type==='pointerover'?120:0);
+}
+document.addEventListener('pointerover',warmIntent);document.addEventListener('focusin',warmIntent);document.addEventListener('pointerdown',warmIntent,{passive:true});
 async function stepScene(delta){if(!scenes.length)return;if(delta>0&&pending===scenes.length-1&&playlist==='catalog'&&catalog.hasMore){if(catalog.loading){toast('正在加载下一批壁纸，请稍候。');return false}const index=scenes.length;if(await loadCatalog(catalog.category,{append:true}))return switchScene(index);return false}return switchScene(pending+delta)}
 function scheduleAutoplay(){clearTimeout(playTimer);if(playing&&scenes.length&&!document.hidden&&!library.open&&!download.open&&!zen){experience.classList.remove('is-playing');requestAnimationFrame(()=>{if(playing&&!document.hidden&&!library.open&&!download.open&&!zen)experience.classList.add('is-playing')});playTimer=setTimeout(()=>stepScene(1),9000)}}
 function setAutoplay(value){if(value&&!currentScene){toast('请等待图库连接完成。');return}playing=value;$('#autoplay').setAttribute('aria-pressed',String(value));$('#autoplay').innerHTML=icon(value?'pause':'play')+`<span>${value?'暂停漫游':'自动漫游'}</span>`;experience.classList.toggle('is-playing',value);if(value)scheduleAutoplay();else clearTimeout(playTimer)}

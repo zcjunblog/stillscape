@@ -72,3 +72,7 @@ dialog{margin:auto;border:1px solid #d6e4d426;background:rgba(14,25,30,.94);colo
 /* Keep drag-selection highlights out of the scenery; search stays editable. */
 body{-webkit-user-select:none;user-select:none}
 input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:text}
+
+/* Cached thumbnails bridge an uncached selection, then dissolve into the full image. */
+.scene-frame>.scene-photo{position:absolute;inset:0}
+.scene-photo-preview{filter:blur(6px)}

@@ -25,7 +25,7 @@ async function boot(t,{playResult=()=>Promise.resolve(),cache=null,storageFails=
  t.after(async()=>{for(const gate of gates.values())gate.resolve();await tick();await tick();disposed=true;for(const timer of timers)realClear(timer);dom.window.close();for(const [key,descriptor] of originals){if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key]}});
  await import(new URL('../app.js?selection-test='+Math.random(),import.meta.url));
  await until(()=>doc.querySelectorAll('.film').length===24&&doc.querySelector('#scene-position').textContent==='01');
- return {doc,strip,requests,storage:window.localStorage,async append(count){doc.querySelector('#film-more').click();await until(()=>doc.querySelectorAll('.film').length===count);await tick()},async choose(index){doc.querySelector(`.film[data-index="${index}"]`).click();await until(()=>Number(doc.querySelector('#scene-position').textContent)===index+1)},holdImage(index){let resolve;const promise=new Promise(r=>resolve=r);const gate={promise,resolve};gates.set(records[index].image,gate);return resolve}};
+ return {doc,strip,requests,storage:window.localStorage,async append(count){doc.querySelector('#film-more').click();await until(()=>doc.querySelectorAll('.film').length===count);await tick()},async choose(index){doc.querySelector(`.film[data-index="${index}"]`).click();await until(()=>Number(doc.querySelector('#scene-position').textContent)===index+1)},holdImage(index){let resolve,reject;const promise=new Promise((r,j)=>{resolve=r;reject=j});const gate={promise,resolve};gates.set(records[index].image,gate);return Object.assign(resolve,{reject})}};
 }
 
 test('appending a page retains the selected thumbnail node, focus and scroll position',async t=>{
@@ -78,4 +78,27 @@ test('corrupt cached payloads cannot break gallery loading',async t=>{
 });
 test('unavailable local storage leaves browsing and pagination usable',async t=>{
  const app=await boot(t,{storageFails:true});await app.append(48);assert.equal(app.doc.querySelectorAll('.film').length,48);
+});
+
+test('revisiting a decoded image does not wait for a new image decode',async t=>{
+ const app=await boot(t);const first=app.doc.querySelector('.scene-frame.current img');await app.choose(5);app.holdImage(0);await app.choose(0);assert.strictEqual(app.doc.querySelector('.scene-frame.current img'),first);
+});
+test('the next image is decoded before the user selects it',async t=>{
+ const app=await boot(t);await tick();await tick();app.holdImage(1);await app.choose(1);assert.equal(app.doc.querySelector('#scene-position').textContent,'02');
+});
+test('an unprepared destination shows its available thumbnail before the full image finishes',async t=>{
+ const app=await boot(t),release=app.holdImage(10),thumb=app.doc.querySelector('.film[data-index="10"] img');Object.defineProperty(thumb,'complete',{value:true});Object.defineProperty(thumb,'naturalWidth',{value:320});
+ app.doc.querySelector('.film[data-index="10"]').click();await tick();assert.equal(app.doc.querySelector('#scene-position').textContent,'11');assert.equal(app.doc.querySelector('.scene-frame.current img').getAttribute('src'),records[10].thumb);assert.equal(app.doc.querySelector('#loading-state').hidden,true);
+ release();await until(()=>app.doc.querySelector('.scene-frame.current img').getAttribute('src')===records[10].image);assert.equal(app.doc.querySelectorAll('.scene-frame').length,1);
+});
+
+test('a late full image cannot replace a more recently selected preview',async t=>{
+ const app=await boot(t),first=app.holdImage(10),second=app.holdImage(11);
+ for(const index of [10,11]){const thumb=app.doc.querySelector(`.film[data-index="${index}"] img`);Object.defineProperty(thumb,'complete',{value:true});Object.defineProperty(thumb,'naturalWidth',{value:320});app.doc.querySelector(`.film[data-index="${index}"]`).click()}
+ first();await tick();assert.equal(app.doc.querySelector('#scene-position').textContent,'12');assert.equal(app.doc.querySelector('.scene-frame.current img').getAttribute('src'),records[11].thumb);
+ second();await until(()=>app.doc.querySelector('.scene-frame.current img').getAttribute('src')===records[11].image);assert.equal(app.doc.querySelectorAll('.scene-frame').length,1);
+});
+test('a failed full image keeps the preview usable and can be retried',async t=>{
+ const app=await boot(t),failed=app.holdImage(10),thumb=app.doc.querySelector('.film[data-index="10"] img');Object.defineProperty(thumb,'complete',{value:true});Object.defineProperty(thumb,'naturalWidth',{value:320});app.doc.querySelector('.film[data-index="10"]').click();failed.reject(Error('image failed'));await tick();await tick();assert.equal(app.doc.querySelector('#scene-position').textContent,'11');assert.equal(app.doc.querySelector('.scene-frame.current img').getAttribute('src'),records[10].thumb);
+ const retry=app.holdImage(10);app.doc.querySelector('.film[data-index="10"]').click();retry();await until(()=>app.doc.querySelector('.scene-frame.current img').getAttribute('src')===records[10].image);
 });
