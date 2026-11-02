@@ -1,163 +1,154 @@
+<div align="center">
+
 # Stillscape · 拾景
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![PHP ≥ 8.1](https://img.shields.io/badge/PHP-8.1%2B-777bb4.svg?style=flat-square)](https://www.php.net/)
-[![Build: Node.js 22+](https://img.shields.io/badge/Build-Node.js_22%2B-43853d.svg?style=flat-square)](https://nodejs.org/)
-[![JavaScript: Vanilla](https://img.shields.io/badge/JavaScript-Vanilla-f7df1e.svg?style=flat-square)](package.json)
-[![CI](https://github.com/zcjunblog/stillscape/actions/workflows/ci.yml/badge.svg)](https://github.com/zcjunblog/stillscape/actions/workflows/ci.yml)
+**每一屏，都是一次抵达。**
 
-以风景为中心的沉浸式壁纸浏览网站。
+一个以风景为中心的沉浸式壁纸画廊。<br>全屏影像、轻柔动效与背景音乐，让浏览成为一段安静的漫游。
 
-Stillscape 将全屏影像、缓动转场与柔和光影结合，提供分类浏览、连续探索、壁纸下载、本地收藏和可选背景音乐。项目使用原生 HTML、CSS 与 JavaScript 构建界面，通过 PHP 或轻量 Node.js 服务接入第三方图库，无数据库和账号系统。PHP 构建可直接上传到现有网站目录，服务器无需常驻 Node.js。
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE) [![PHP ≥ 8.1](https://img.shields.io/badge/PHP-8.1%2B-777bb4.svg?style=flat-square)](https://www.php.net/) [![JavaScript: Vanilla](https://img.shields.io/badge/JavaScript-Vanilla-f7df1e.svg?style=flat-square)](package.json) [![Build: Node.js 22+](https://img.shields.io/badge/Build-Node.js_22%2B-43853d.svg?style=flat-square)](https://nodejs.org/) [![CI](https://github.com/zcjunblog/stillscape/actions/workflows/ci.yml/badge.svg)](https://github.com/zcjunblog/stillscape/actions/workflows/ci.yml)
 
-![Stillscape 预览](docs/preview.png)
+[在线体验](https://xss6.com/stillscape/) · [三步部署](#三步部署) · [开发文档](#开发与构建) · [反馈问题](https://github.com/zcjunblog/stillscape/issues)
 
-## 功能特性
+</div>
 
-- **沉浸浏览**：全屏风景、镜头缓动、指针光影、纯净赏图与自动漫游。
-- **多来源图库**：接入 360 壁纸分类及 Bing 每日图片，支持分页浏览与接近末尾自动续载。
-- **稳定加载**：等高骨架屏、缩略图预览、高清图淡入；续载保留当前选择、键盘焦点及滚动位置。
-- **下载与收藏**：提供来源原图和适配分辨率下载；收藏保存在当前浏览器。
-- **轻音乐**：默认关闭，用户点击后加载；支持循环播放、暂停续播及音量淡入淡出。
-- **多端操作**：适配桌面与手机，支持键盘快捷键，并遵循系统“减少动态效果”设置。
+<p align="center">
+  <a href="https://xss6.com/stillscape/">
+    <img src="https://raw.githubusercontent.com/zcjunblog/stillscape/main/docs/preview-aurora.png" alt="拾景演示：极光、星空与全屏风景浏览界面" width="100%">
+  </a>
+</p>
+<p align="center"><sub>极光之下，留一刻给风景。点击画面进入在线演示。</sub></p>
 
-## 快速开始
+## 关于拾景
 
-开发和构建需要 **Node.js 22 或更高版本**。直接上传部署请使用下方的 PHP 版本，服务器只需 PHP 8.1+ 与 cURL 扩展。以下命令运行 Node.js 开发服务，无需安装第三方运行时依赖。
+Stillscape 将壁纸浏览、收藏与下载融入同一个全屏界面。风景是画面的主体，操作停留在视线边缘；从缩略图探索到高清图呈现，以连续转场连接每一次选择。
+
+项目采用原生 HTML、CSS 与 JavaScript，无前端框架运行时依赖。提供 **PHP 直接上传版**与可选的 Node.js 运行版，无需数据库或账号系统，适合部署在个人网站的独立目录。
+
+## 体验与功能
+
+| 能力 | 细节 |
+| --- | --- |
+| **沉浸浏览** | 全屏影像、镜头缓动与指针光影；支持纯净赏图和自动漫游 |
+| **分类探索** | 360 壁纸分类与 Bing 每日图片，接近列表末尾自动加载下一批 |
+| **平稳切换** | 等高骨架屏、相邻图片预加载、缩略图到高清图淡入；续载保留当前选择 |
+| **下载与收藏** | 来源原图与适配分辨率下载，本地收藏，以及已加载图片搜索 |
+| **轻音乐** | 默认关闭，点击后加载；支持循环、暂停续播与音量淡入淡出 |
+| **多端适配** | 桌面与手机布局、键盘操作，并遵循系统“减少动态效果”设置 |
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/zcjunblog/stillscape/main/docs/preview-winter.png" alt="拾景演示：冬日雪景、壁纸胶片列表与友情链接面板" width="100%">
+</p>
+<p align="center"><sub>冬日来信 · 全屏浏览与风景胶片</sub></p>
+
+## 三步部署
+
+1. **开启 PHP**：在网站管理面板中，为站点选择 **PHP 8.1+**，启用 **cURL** 扩展，并确保 HTTPS CA 证书可用。宝塔用户请检查“网站 → PHP 版本”，不能保持“纯静态”。
+2. **构建并上传**：在本机安装 Node.js 22+，下载源码后进入项目目录执行以下命令；将生成的 `dist/php-img/` **里面的全部文件**上传到网站根目录的 `stillscape/` 文件夹。
+
+   ```sh
+   npm ci
+   npm run build:php
+   ```
+
+3. **打开网站**：访问 `https://你的域名/stillscape/`。入口应是 `网站根目录/stillscape/index.html`，API 应返回 JSON；本项目的在线演示为 **[xss6.com/stillscape](https://xss6.com/stillscape/)**。
+
+**服务器不需要 Node.js、npm、数据库或 API 伪静态规则。** Node.js 仅用于本机构建。PHP 请求使用实际文件 `api/index.php?route=...`，也支持自行更换部署目录名称。
+
+连接异常、缓存与 Nginx 排查见 [PHP 部署说明](deploy/php.md)；需要 Node.js 运行方式时参阅 [Node.js 部署说明](deploy/README.md)。
+
+## 开发与构建
 
 ```sh
 git clone https://github.com/zcjunblog/stillscape.git
 cd stillscape
+npm ci
 npm start
 ```
 
-访问 [http://127.0.0.1:4178](http://127.0.0.1:4178)。
+本地开发地址：[http://127.0.0.1:4178](http://127.0.0.1:4178)。运行完整测试还需要 PHP 8.1+ 与 cURL。
 
-开发、测试与生产构建：
-
-```sh
-npm ci
-npm test
-npm run build
-npm run preview
-```
-
-| 命令 | 说明 |
+| 命令 | 用途 |
 | --- | --- |
-| `npm start` | 运行源码版本；前端修改后刷新即可，服务端修改后需重启 |
-| `npm test` | 执行 API、缓存、下载、分页、加载状态及音乐等自动化测试 |
-| `npm run build` | 生成压缩、资源指纹和 Brotli/Gzip 文件 |
-| `npm run build:php` | 生成 `dist/php-img/`，可直接上传的 PHP 部署版 |
-| `npm run preview` | 运行 `dist/shijing/` 中的生产构建 |
+| `npm start` | 启动 Node.js 开发服务 |
+| `npm test` | 执行 Node.js / PHP API、缓存、下载、分页及交互测试 |
+| `npm run build:php` | 输出 PHP 直接上传版至 `dist/php-img/` |
+| `npm run build` | 输出 Node.js 运行版至 `dist/shijing/` |
+| `npm run preview` | 预览 Node.js 生产构建 |
 
-仓库中的 GitHub Actions 工作流会在推送和 Pull Request 时执行 Node.js / PHP 接口测试与两种构建。测试 PHP 适配器需要本机 PHP 8.1+ 与 cURL。
+GitHub Actions 在推送和 Pull Request 时执行测试及两种构建。
 
-## 部署
+<details>
+<summary><strong>项目结构、接口与自定义</strong></summary>
 
-部署目标：[https://xss6.com/img/](https://xss6.com/img/)。
-
-### PHP 直接上传版（推荐）
-
-```sh
-npm ci
-npm run build:php
-```
-
-将 `dist/php-img/` **里面的全部文件**放入 xss6.com 网站根目录的 `img/` 文件夹，使入口为 `网站根目录/img/index.html`。服务器需要 **PHP 8.1+、cURL 扩展及可用的 HTTPS CA 证书**，无需 Node.js、npm、数据库或 API 伪静态规则。
-
-PHP 请求入口为 `api/index.php?route=...`，所有地址相对当前目录解析。完整操作与排查见 [PHP 部署说明](deploy/php.md)。
-
-### Node.js 版（可选）
-
-```sh
-npm ci
-npm run build
-cd dist/shijing
-HOST=127.0.0.1 PORT=4178 node server.mjs
-```
-
-使用进程管理工具维持服务运行，在现有站点为 `/img/` 配置反向代理，参考 [Node.js 部署说明](deploy/README.md)。该版本的 Node.js 负责 API 与静态资源服务。
-
-两种版本都包含服务端 API 适配器，不能只部署到不支持 PHP / Node.js 的纯静态平台。发布版 JS/CSS 已压缩并带内容指纹，附带预压缩 Brotli/Gzip 文件；PHP 版静态资源压缩、缓存和音频 Range 由现有网站服务配置决定。
-
-## 项目结构
+### 项目结构
 
 ```text
-.
-├── index.html              # 页面结构与 SVG 图标
-├── style.css               # 视觉、响应式布局与动效
-├── app.js                  # 浏览、收藏、预加载和音乐交互
-├── api.mjs                 # Node.js 图库适配、数据缓存与下载代理
-├── php/                    # PHP 请求入口及相同数据契约的 API 适配器
-├── deploy/                 # PHP 直接上传及 Node.js 反向代理部署说明
-├── server.mjs              # HTTP 服务、压缩与静态资源缓存
-├── build.mjs               # 生产构建
-├── assets/                 # 加载背景与可选背景音乐
-├── docs/preview.png        # 界面预览
-├── test/                   # 自动化测试
-├── THIRD_PARTY.md          # 第三方来源与素材声明
-└── LICENSE                 # 应用代码的 MIT 许可证
+stillscape/
+├── index.html       # 页面结构与 SVG 图标
+├── style.css        # 视觉、响应式布局与动效
+├── app.js           # 浏览、收藏、预加载与音乐交互
+├── php/             # PHP API 入口与图库适配器
+├── api.mjs          # Node.js API 适配器
+├── server.mjs       # Node.js HTTP 服务
+├── build.mjs        # 压缩、资源指纹与生产构建
+├── assets/          # 加载背景与可选背景音乐
+├── docs/            # 界面演示图片
+├── deploy/          # 部署与故障排查说明
+└── test/            # 自动化测试
 ```
 
-## 接口与数据说明
+### 接口
 
-Node.js 版本提供以下路径；PHP 版本通过 `api/index.php?route=categories`、`route=wallpapers`、`route=bing`、`route=download` 提供同样的数据格式与参数。PHP 入口使用真实文件，不需要 URL 重写。
+PHP 版本使用 `api/index.php?route=...`，Node.js 版本使用 `/api/...`，两者的数据格式一致。
 
-| 路径 | 用途 |
-| --- | --- |
-| `/api/categories` | 获取 360 壁纸分类，缓存 1 小时 |
-| `/api/wallpapers?category=9&start=0&count=24` | 按分类分页，每次最多 48 张，缓存 5 分钟 |
-| `/api/bing?start=0&count=8` | 获取 Bing 近期每日图片，缓存 15 分钟 |
-| `/api/download?url=...&size=original` | 下载来源原图或适配尺寸，仅接受允许的图片来源 |
+| PHP 路由参数 | Node.js 路径 | 用途 |
+| --- | --- | --- |
+| `route=categories` | `/api/categories` | 获取壁纸分类 |
+| `route=wallpapers&category=9&start=0&count=24` | `/api/wallpapers?category=9&start=0&count=24` | 分类分页，每次最多 48 张 |
+| `route=bing&start=0&count=8` | `/api/bing?start=0&count=8` | Bing 近期每日图片 |
+| `route=download&url=...&size=original` | `/api/download?url=...&size=original` | 校验图片来源并提供下载 |
 
-首页首批加载 24 张，继续浏览会自动请求后续页面。360 图库内容及更新频率取决于上游；Bing 当前最多浏览近期 15 天。搜索仅筛选当前已加载图片。
+### 自定义
 
-本项目使用第三方可访问接口，接口稳定性、内容数量与持续可用性由上游决定。项目不提供壁纸内容授权，也不保证第三方接口具有服务等级承诺。
+- **文案与交互**：修改 `app.js`；布局与样式位于 `index.html`、`style.css`。
+- **背景音乐**：替换 `assets/ambient-music.mp3` 后重新构建，并更新 [素材声明](THIRD_PARTY.md)；更改文件名时同步修改 `app.js` 和 `build.mjs`。
+- **友情链接**：在 `index.html` 的 `#friend-links .friend-panel` 中追加 `.friend-entry` 链接。
 
-## 性能与本地数据
+</details>
 
-PHP 版本将有限期的元数据缓存放在系统临时目录，最多 200 条；缓存不可写时退化为直接请求，不影响浏览。Node.js 版本使用服务内存缓存。
+## 性能与数据边界
 
-- 生产构建压缩 HTML 引用的 JS/CSS，并为静态资源生成内容指纹及 Brotli/Gzip 文件；HTML 重新验证，带指纹资源可长期缓存。
-- 分类和图库页面元数据使用有期限的浏览器本地缓存，最多保留 12 条记录；缓存损坏或存储不可用时仍可继续浏览。
-- 复用最近解码的图片，顺序预加载相邻风景，并在指针停留或键盘聚焦时准备目标图片；开启省流模式或慢速网络时减少自动预取。
-- 未准备好的大图优先呈现可用缩略图，再淡入高清图；骨架屏在首次绘制时预留缩略图位置。
-- 背景音乐约 7 MB，仅在点击开关后请求，支持音频字节范围加载。
+发布构建包含压缩后的 JS/CSS、内容指纹和 Brotli/Gzip 文件。分类与页面元数据使用有限期缓存，图片按需加载并复用最近的解码结果；音乐仅在用户点击后请求。PHP 版本的静态资源缓存、压缩与音频 Range 由现有网站服务配置决定。
 
-收藏与图库元数据保存在当前浏览器，不提供跨设备同步。图片显示与下载会访问第三方来源；本地缓存不代表图库可以完整离线使用。公网首屏速度取决于部署环境、网络及来源 CDN。
+收藏保存在当前浏览器，不提供跨设备同步；搜索仅筛选已加载图片。首页首批加载 24 张并可继续分页，Bing 当前最多浏览近期 15 天。图库内容、更新频率和接口可用性取决于第三方来源，实际打开速度取决于部署环境、网络与图片 CDN。
 
 ## 项目参考与致谢
 
 ### 图库接口参考
 
-本项目参考了 [mengkunsoft/wallpaper](https://github.com/mengkunsoft/wallpaper) 对 **360 壁纸分类、分类分页接口及 Bing 每日图片接口的使用方式**，感谢原作者对接口调用思路的整理与公开分享。具体参考可见其 [API 实现](https://github.com/mengkunsoft/wallpaper/blob/master/api/index.php)。
+感谢 [mengkunsoft/wallpaper](https://github.com/mengkunsoft/wallpaper) 对壁纸接口调用方式的公开整理。本项目参考其 [API 实现](https://github.com/mengkunsoft/wallpaper/blob/master/api/index.php) 中 **360 分类、分类分页与 Bing 每日图片接口的使用方式**。
 
-Stillscape 的页面布局、视觉样式、动画、交互与 Node.js / PHP 服务由本项目独立实现。参考项目的版权与其自身的使用要求归原作者所有，本仓库的 MIT 许可证不适用于参考项目。
+Stillscape 的页面布局、视觉样式、动画交互及 Node.js / PHP 服务由本项目独立实现。参考项目的版权与使用要求归原作者所有，本仓库的 MIT 许可证不覆盖参考项目。
 
 ### 自有设计 Skill
 
-网站的视觉设计、Motion 动效、光影效果和界面打磨使用作者自有的 **「官网设计」Skill（`guanwang`，本项目早期以 `website-ui-craft` 名称使用）**，配合 Codex 完成设计与开发。
+网站的视觉设计、Motion 动效、光影效果与界面打磨，使用作者自有的 **「官网设计」Skill（`guanwang`，早期名称 `website-ui-craft`）**，配合 Codex 完成设计与开发。
 
-该 Skill 计划作为独立项目发布到 GitHub。**当前尚未提供公开仓库链接，开源后会在本节补充正式地址。** Skill 本体未包含在本仓库中，其后续许可与文档以独立仓库为准。
+该 Skill 计划独立开源，**正式发布后将在此补充 GitHub 链接**。Skill 本体未包含在本仓库中，其许可与使用文档以未来的独立仓库为准。
 
 <!-- SKILL_REPOSITORY_URL: TODO — 官网设计 Skill 开源后，在此补充正式 GitHub 链接。 -->
 
-## 自定义
-
-- **默认分类、文案与交互**：修改 `app.js`；布局与视觉样式位于 `index.html`、`style.css`。
-- **背景音乐**：替换 `assets/ambient-music.mp3`，更新 [第三方素材声明](THIRD_PARTY.md)，重新构建。更换文件名时同步修改 `app.js` 与 `build.mjs`。
-- **友情链接**：在 `index.html` 的 `#friend-links .friend-panel` 中追加 `.friend-entry` 链接。默认包含 [简约导航](https://nav.gs/) 和 [关于我们](https://jkhcz.com/)。
-
 ## 版权与许可
 
-Copyright © 2026 [zcjunblog](https://github.com/zcjunblog)。应用代码与项目原创文档采用 [MIT License](LICENSE)；复制、修改或分发时请保留许可证要求的版权及许可声明。
+Copyright © 2026 [zcjunblog](https://github.com/zcjunblog)。应用代码与原创文档采用 **[MIT License](LICENSE)**，复制、修改或分发时请保留相应版权与许可声明。
 
-**MIT 许可证不覆盖壁纸、摄影、背景音乐、预览截图中的第三方影像以及第三方名称或标识。** 这些内容的权利归各自权利人所有，下载或展示不构成额外的使用授权。
+**摄影、壁纸、背景音乐及演示截图中的第三方影像不适用本项目的 MIT 许可**，相关权利归各自权利人所有。随仓库提供的音乐尚未核实曲名、作者及独立的再分发许可，不作为原创或免版权音频发布；使用、再分发或商用前，请核实授权或更换为已获授权的素材。完整来源见 [THIRD_PARTY.md](THIRD_PARTY.md)。
 
-仓库中的音乐来自项目维护者指定的外部地址，目前未核实曲名、作者及独立的再分发许可，本项目不将其声明为原创或免版权音乐。使用、再分发或商用第三方素材前，请确认相应权利与许可。详细来源、文件范围及处理方式见 [THIRD_PARTY.md](THIRD_PARTY.md)。
+如权利人对素材使用有异议，请通过 [Issues](https://github.com/zcjunblog/stillscape/issues) 提供文件位置与来源说明，以便核实并移除或替换；请勿公开提交私人证明材料。
 
-如权利人对本项目展示或包含的素材有异议，可通过 [GitHub Issues](https://github.com/zcjunblog/stillscape/issues) 联系维护者，并提供相关文件、来源与权属信息，以便核实并移除或替换。请勿在公开 Issue 中提交私人证明材料。
+## 参与项目
 
-## 反馈与贡献
+欢迎提交 Issue 或 Pull Request。报告问题时，请附浏览器、设备尺寸、复现步骤及相关截图；提交代码前请运行 `npm test`、`npm run build` 和 `npm run build:php`。
 
-欢迎通过 [Issues](https://github.com/zcjunblog/stillscape/issues) 报告问题，或提交 Pull Request。反馈界面问题时，请尽量提供浏览器、设备尺寸、复现步骤及截图；提交代码前请运行 `npm test`、`npm run build` 与 `npm run build:php`。
+<p align="center"><a href="https://xss6.com/stillscape/">进入拾景，去看下一片风景。</a></p>
