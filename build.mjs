@@ -23,6 +23,7 @@ if(php){
  await copyFile('deploy/php.md',join(dest,'DEPLOY.md'));
 }else{
  for(const file of ['api.mjs','server.mjs'])await copyFile(file,join(dest,file));
+ await copyFile('deploy/README.md',join(dest,'DEPLOY.md'));
  await writeFile(join(dest,'README.md'),(await readFile('README.md','utf8')).replace(/!\[Stillscape 预览\]\(docs\/preview\.png\)\n/,''));
  await mkdir(join(dest,'deploy'),{recursive:true});for(const file of ['README.md','nginx-img.conf','php.md'])await copyFile(join('deploy',file),join(dest,'deploy',file));
  const pkg=JSON.parse(await readFile('package.json','utf8'));for(const script of ['test','build','build:php','preview'])delete pkg.scripts[script];delete pkg.devDependencies;await writeFile(join(dest,'package.json'),JSON.stringify(pkg,null,2)+'\n');

@@ -9,6 +9,7 @@ import {brotliDecompressSync,gunzipSync} from 'node:zlib';
 test('release references content-hashed assets with matching precompressed representations',async()=>{
  await promisify(execFile)(process.execPath,['build.mjs'],{cwd:new URL('..',import.meta.url)});
  const root=new URL('../dist/shijing/',import.meta.url),html=await readFile(new URL('index.html',root),'utf8');
+ assert.ok((await readFile(new URL('DEPLOY.md',root))).length,'Node deployment package needs a top-level startup guide');
  const script=/src="(assets\/app\.[a-f0-9]{12}\.js)"/.exec(html)?.[1],style=/href="(assets\/style\.[a-f0-9]{12}\.css)"/.exec(html)?.[1];
  assert.ok(script,'HTML must load the fingerprinted script');assert.ok(style);
  for(const name of ['index.html',script,style]){

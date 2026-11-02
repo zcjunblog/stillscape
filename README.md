@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE) [![PHP ≥ 8.1](https://img.shields.io/badge/PHP-8.1%2B-777bb4.svg?style=flat-square)](https://www.php.net/) [![JavaScript: Vanilla](https://img.shields.io/badge/JavaScript-Vanilla-f7df1e.svg?style=flat-square)](package.json) [![Build: Node.js 22+](https://img.shields.io/badge/Build-Node.js_22%2B-43853d.svg?style=flat-square)](https://nodejs.org/) [![CI](https://github.com/zcjunblog/stillscape/actions/workflows/ci.yml/badge.svg)](https://github.com/zcjunblog/stillscape/actions/workflows/ci.yml)
 
-[在线体验](https://xss6.com/stillscape/) · [三步部署](#三步部署) · [开发文档](#开发与构建) · [反馈问题](https://github.com/zcjunblog/stillscape/issues)
+[在线体验](https://xss6.com/stillscape/) · [下载部署包](https://github.com/zcjunblog/stillscape/releases/latest) · [三步部署](#三步部署) · [开发文档](#开发与构建) · [反馈问题](https://github.com/zcjunblog/stillscape/issues)
 
 </div>
 
@@ -43,21 +43,30 @@ Stillscape 将壁纸浏览、收藏与下载融入同一个全屏界面。风景
 
 ## 三步部署
 
-1. **开启 PHP**：在网站管理面板中，为站点选择 **PHP 8.1+**，启用 **cURL** 扩展，并确保 HTTPS CA 证书可用。宝塔用户请检查“网站 → PHP 版本”，不能保持“纯静态”。
-2. **构建并上传**：在本机安装 Node.js 22+，下载源码后进入项目目录执行以下命令；将生成的 `dist/php-img/` **里面的全部文件**上传到网站根目录，或任意自行命名的子目录，保持文件与文件夹的相对结构。
+**支持 PHP 和 Node.js 两种运行方式，选择其中一种即可。** [Releases](https://github.com/zcjunblog/stillscape/releases/latest) 提供已构建的部署包，下载后无需在服务器安装构建依赖或重新编译。
 
-   ```sh
-   npm ci
-   npm run build:php
-   ```
+| 部署版本 | 服务器要求 | 下载与使用 |
+| --- | --- | --- |
+| **PHP 直接上传版** | PHP 8.1+、cURL、可用的 HTTPS CA 证书 | [stillscape-php.zip](https://github.com/zcjunblog/stillscape/releases/latest/download/stillscape-php.zip)，上传到网站目录，无需 Node.js 服务 |
+| **Node.js 运行版** | Node.js 22+，能保持进程运行 | [stillscape-node.zip](https://github.com/zcjunblog/stillscape/releases/latest/download/stillscape-node.zip)，解压后启动服务，无需 PHP |
 
-3. **打开网站**：上传到根目录就访问 `https://你的域名/`；上传到子目录（例如 `wallpaper/`）就访问 `https://你的域名/wallpaper/`。所选部署目录内应直接包含 `index.html`、`assets/` 和 `api/`，API 应返回 JSON。
+### PHP 版
 
-**不要求固定目录名，也不需要修改路径配置。** 本项目的 [在线演示](https://xss6.com/stillscape/) 使用 `/stillscape/`，仅作为部署示例。
+1. **开启 PHP**：为网站选择 PHP 8.1+ 并启用 cURL。宝塔用户检查“网站 → PHP 版本”，不能保持“纯静态”。
+2. **上传文件**：解压 `stillscape-php.zip`，将内部 `stillscape/` 文件夹里的**全部内容**上传到网站根目录或任意子目录，保持文件结构。
+3. **打开网站**：根目录部署访问 `https://你的域名/`；子目录部署则访问对应地址，例如 `https://你的域名/wallpaper/`。该目录应直接包含 `index.html`、`assets/` 和 `api/`。
 
-**服务器不需要 Node.js、npm、数据库或 API 伪静态规则。** Node.js 仅用于本机构建。PHP 请求使用相对地址 `api/index.php?route=...`。
+### Node.js 版
 
-连接异常、缓存与 Nginx 排查见 [PHP 部署说明](deploy/php.md)；需要 Node.js 运行方式时参阅 [Node.js 部署说明](deploy/README.md)。
+1. **解压文件**：下载 `stillscape-node.zip`，在装有 Node.js 22+ 的服务器上解压，进入内部 `stillscape/` 目录。
+2. **启动服务**：执行 `HOST=127.0.0.1 PORT=4178 node server.mjs`，通过宝塔 Node 项目、PM2 或已有进程管理工具保持运行，无需执行 `npm install`。
+3. **绑定域名**：将域名根路径或自选子目录反向代理到 `127.0.0.1:4178`；子目录代理需移除路径前缀，参见包内 `DEPLOY.md` 的示例。
+
+**两种版本均无需数据库。** PHP 版无需常驻 Node.js 服务，Node.js 版无需 PHP 环境。部署目录名称不受限制；[在线演示](https://xss6.com/stillscape/) 使用的 `/stillscape/` 仅为示例。
+
+每个部署包均附 `DEPLOY.md` 和素材许可说明，[SHA256SUMS.txt](https://github.com/zcjunblog/stillscape/releases/latest/download/SHA256SUMS.txt) 用于核对下载文件。GitHub 自动生成的 **Source code** 是源码归档，开发或自行构建时使用；直接部署请选择上表中对应的 ZIP。
+
+详细排查见 [PHP 部署说明](deploy/php.md) 与 [Node.js 部署说明](deploy/README.md)。
 
 ## 开发与构建
 

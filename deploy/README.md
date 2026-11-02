@@ -1,36 +1,46 @@
-# xss6.com/stillscape/ 部署说明
+# 拾景 · Node.js 运行版
 
-目标地址：**https://xss6.com/stillscape/**。
+在线演示：[https://xss6.com/stillscape/](https://xss6.com/stillscape/)。支持部署到独立域名根路径或任意子目录，目录名称不限。
 
-这是已构建、压缩并带资源指纹的 Node.js 部署包。需要 **Node.js 22+** 与现有 Nginx 站点，不需要数据库，也不需要在服务器运行 `npm install` 或重新构建。仅把文件放进静态 `img` 文件夹无法运行图库 API。
+本包已经构建、压缩并带有资源指纹。服务器需要 **Node.js 22+**，不需要 PHP、数据库、`npm install` 或重新构建。需要能够保持 Node 进程运行；如果只想上传文件到已有 PHP 站点，请选择 Release 中的 `stillscape-php.zip`。
 
-## 1. 上传并运行服务
+## 三步部署
 
-推荐把 ZIP 解压到独立目录，例如 `/www/wwwroot/stillscape/`。解压后的 `server.mjs`、`index.html`、`assets/` 应在该目录同一层；不要出现多套重复的 `stillscape/stillscape/` 层级。
+1. **解压并进入目录**：下载 `stillscape-node.zip`，解压后进入内部 `stillscape/`，确认 `server.mjs`、`index.html`、`assets/` 位于同一层。
+2. **启动并保持运行**：执行下面的命令，再通过宝塔 Node 项目、PM2 或已有进程管理工具保持运行。启动文件为 `server.mjs`，工作目录为解压后的应用目录，环境变量为 `HOST=127.0.0.1`、`PORT=4178`。
 
-```sh
-cd /www/wwwroot/stillscape
-HOST=127.0.0.1 PORT=4178 node server.mjs
+   ```sh
+   HOST=127.0.0.1 PORT=4178 node server.mjs
+   ```
+
+3. **绑定域名并访问**：先确认服务器本机的 `http://127.0.0.1:4178/` 可访问，再在现有网站中配置 HTTPS 反向代理。可使用域名根路径，也可使用自选子目录；配置参考下方示例。
+
+若端口已占用，改成空闲端口并同步修改代理配置，无需向公网开放 Node 端口。
+
+## Nginx 反向代理示例
+
+以下配置仅合并到现有网站的 `server {}` 内，不要覆盖原有证书或其他站点配置。根路径和子目录示例按需求二选一。
+
+### 独立域名根路径
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:4178/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Connection "";
+    proxy_read_timeout 60s;
+}
 ```
 
-通过宝塔 Node 项目、PM2 或已有进程管理工具保持运行。启动文件选 `server.mjs`，工作目录选 `/www/wwwroot/stillscape`，环境变量为 `HOST=127.0.0.1`、`PORT=4178`，并使用 Node.js 22+。
+### 自选子目录
 
-先确认 `http://127.0.0.1:4178/` 可在服务器本机访问。若端口被占用，改用空闲端口，并同步修改下一步的 `proxy_pass`。无需向公网开放 Node 端口。
+包内 `deploy/nginx-img.conf` 提供 `/wallpaper/` 示例。将其中的路径改成需要的目录名即可，`proxy_pass http://127.0.0.1:4178/;` **末尾的 `/` 必须保留**，使 `/wallpaper/api/...` 转发为 Node 服务的 `/api/...`。
 
-## 2. 配置 /stillscape/ 路径
-
-在 **xss6.com 现有站点**的 Nginx `server {}` 内加入同目录 `nginx-img.conf` 的内容。保留原站根目录、PHP、证书等配置；不要用本文件覆盖整个站点配置。
-
-配置会将：
-
-- `/img` 重定向到 `/stillscape/`，保留查询参数。
-- `/stillscape/` 转发到 Node 首页。
-- `/stillscape/api/...` 转发到 Node 的 `/api/...`。
-- `/stillscape/assets/...` 转发到 Node 的 `/assets/...`。
-
-`proxy_pass http://127.0.0.1:4178/;` **末尾的 `/` 必须保留**。前端的 API、下载、CSS、JS、图片和音乐使用相对地址，统一留在 `/stillscape/` 下；同一份构建也可直接在独立域名根路径运行。
-
-检查配置后再重载 Nginx：
+检查配置后再重载：
 
 ```sh
 nginx -t
@@ -38,26 +48,19 @@ nginx -t
 nginx -s reload
 ```
 
-HTTPS 由现有站点证书提供。若站点有全局重写或另一个 `/stillscape` 规则，需合并冲突规则；不要让所有 `/stillscape/` 请求回退到原站首页。
+前端的接口、下载与资源使用相对地址；Node.js 服务接收移除代理前缀后的请求。上述代理配置仅适用于 Node.js 版本，PHP 直接上传版不需要配置 `proxy_pass`。
 
-## 3. 部署后核对
+## 验收与常见问题
 
-```sh
-curl -I https://xss6.com/stillscape
-curl -I https://xss6.com/stillscape/
-curl -f 'https://xss6.com/stillscape/api/categories'
-```
+- 打开部署地址，确认图库加载正常。部署地址后追加 `api/categories` 应返回 JSON。
+- 验证分类、继续加载、下载与音乐开关。音乐默认关闭，点击后才请求；不存在的资源应返回 404。
+- 502 通常需要检查 Node 进程、监听地址与代理端口；子目录下资源或接口 404 时，检查代理是否移除了路径前缀。
+- Node 服务提供预压缩 Brotli/Gzip、指纹资源缓存、ETag / 304 和音频字节范围请求；外层代理应保留相关请求与响应头。
 
-第一项应重定向到 `/stillscape/`，第二项应返回 HTML，第三项应返回含 `categories` 的 JSON。
+## 更新与回退
 
-在浏览器检查分类、继续加载、下载及音乐开关。JS/CSS 请求应位于 `/stillscape/assets/`，API 请求应位于 `/stillscape/api/`，不存在的资源应返回 404。音乐默认关闭，点击后才请求。
+备份完整运行目录。先放入新指纹资源，再替换 HTML 与服务文件，重启 Node 进程；旧资源可保留一段时间。需要回退时恢复上一版完整目录并重启服务。
 
-## 4. 更新与回退
-
-备份当前完整运行目录；更新时先放入新指纹资源，再更新 HTML、JS 所需文件和服务文件，重启 Node 服务。保留旧资源一段时间，避免已打开页面失效。需要回退时恢复上一版完整目录并重启服务。
-
-## 验证范围
-
-Node.js 运行版通过移除目录前缀的反向代理挂载。xss6.com 的实际证书、Nginx 配置与公网性能需要上传并启用后检查；本包不代表服务器已经上线。
+素材许可见包内 `THIRD_PARTY.md`。域名、HTTPS 与公网性能需按实际部署环境检查。
 
 Nginx 路径转换依据：[官方 proxy_pass 文档](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass)。

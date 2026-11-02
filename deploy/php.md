@@ -2,7 +2,9 @@
 
 在线演示：**https://xss6.com/stillscape/**。可部署到网站根目录或任意子目录，不要求使用 `/stillscape/`，无需修改路径配置。
 
-此包已完成前端构建，服务器不需要 Node.js、npm、数据库或常驻进程。需要 **PHP 8.1+**、**PHP cURL 扩展**，以及可用的 HTTPS CA 证书。PHP 按请求转发图库与下载，静态图片、JS、CSS、音乐由现有网站服务提供。
+请从 [Releases](https://github.com/zcjunblog/stillscape/releases/latest) 下载 `stillscape-php.zip`。此包已完成前端构建，服务器不需要 Node.js、npm、数据库或常驻进程。需要 **PHP 8.1+**、**PHP cURL 扩展**，以及可用的 HTTPS CA 证书。PHP 按请求转发图库与下载，静态图片、JS、CSS、音乐由现有网站服务提供。
+
+包内的 `stillscape/` 是解压后的容器目录，名称不是部署要求；可将其中内容放在网站根目录或任意子目录。
 
 ## 三步上传
 
