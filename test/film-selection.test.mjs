@@ -6,7 +6,7 @@ import {JSDOM} from 'jsdom';
 
 const records=Array.from({length:120},(_,i)=>({id:`360:${1000+i}`,source:'360',sourceId:String(1000+i),category:'9',name:`风景 ${i+1}`,tags:['风景',String(i+1)],width:2560,height:1440,resolution:'2560 × 1440',quality:'QHD',original:`https://p2.qhimg.com/bdr/__85/t01${1000+i}.jpg`,image:`https://p2.qhimg.com/bdm/1920_1080_85/t01${1000+i}.jpg`,thumb:`https://p2.qhimg.com/bdm/320_200_75/t01${1000+i}.jpg`,credit:'图片来源：360 壁纸',createdAt:'2022-01-18 12:00:00',downloadable:true}));
 async function until(check){for(let i=0;i<100;i++){if(check())return;await tick()}throw Error('Application did not settle')}
-async function boot(t,{playResult=()=>Promise.resolve(),cache=null,storageFails=false}={}){
+async function boot(t,{playResult=()=>Promise.resolve(),cache=null,storageFails=false,onCatalogRequest=()=>{}}={}){
  const html=await readFile(new URL('../index.html',import.meta.url),'utf8');
  const dom=new JSDOM(html,{url:'http://localhost:4178/',pretendToBeVisual:true});const {window}=dom,doc=window.document;
  if(cache!==null)window.localStorage.setItem('stillscape-api-cache-v1',JSON.stringify(cache));
@@ -17,7 +17,7 @@ async function boot(t,{playResult=()=>Promise.resolve(),cache=null,storageFails=
  for(const [key,value] of Object.entries({window,document:doc,localStorage:window.localStorage,innerWidth:1440,innerHeight:900,matchMedia:query=>({matches:query.includes('reduced-motion'),addEventListener(){}}),requestAnimationFrame:callback=>realSet(()=>{if(!disposed)callback(performance.now())},0),cancelAnimationFrame:realClear}))install(key,value);
  install('setTimeout',(callback,ms,...args)=>{const timer=realSet(()=>{timers.delete(timer);if(!disposed)callback(...args)},ms);timers.add(timer);return timer});
  install('clearTimeout',timer=>{timers.delete(timer);realClear(timer)});
- install('fetch',async input=>{requests.push(String(input));const url=new URL(String(input),'http://localhost');if(url.pathname==='/api/categories')return Response.json({categories:[{id:'9',name:'风景大片'}]});if(url.pathname==='/api/wallpapers'){const start=Number(url.searchParams.get('start')||0),count=Number(url.searchParams.get('count')||24),items=records.slice(start,start+count);return Response.json({items,total:120,nextStart:start+items.length,hasMore:start+items.length<120})}throw Error('Unexpected fixture request: '+url.pathname)});
+ install('fetch',async input=>{requests.push(String(input));const url=new URL(String(input),'http://localhost');if(url.pathname==='/api/categories')return Response.json({categories:[{id:'9',name:'风景大片'}]});if(url.pathname==='/api/wallpapers'){onCatalogRequest(doc);const start=Number(url.searchParams.get('start')||0),count=Number(url.searchParams.get('count')||24),items=records.slice(start,start+count);return Response.json({items,total:120,nextStart:start+items.length,hasMore:start+items.length<120})}throw Error('Unexpected fixture request: '+url.pathname)});
  install('Image',function(){const image=doc.createElement('img');image.decode=()=>gates.get(image.getAttribute('src'))?.promise||Promise.resolve();return image});
  window.HTMLElement.prototype.animate=function(){return {cancel(){},pause(){},play(){},finished:Promise.resolve()}};
  const paused=new WeakMap();window.HTMLMediaElement.prototype.play=function(){return playResult().then(()=>{paused.set(this,false)})};window.HTMLMediaElement.prototype.pause=function(){paused.set(this,true)};Object.defineProperty(window.HTMLMediaElement.prototype,'paused',{get(){return paused.get(this)??true}});
@@ -110,4 +110,15 @@ test('the friend list closes on outside click and Escape restores its trigger fo
 });
 test('Space on the friend trigger remains available to native disclosure behavior',async t=>{
  const {doc}=await boot(t),trigger=doc.querySelector('#friend-links summary');assert.ok(trigger);const event=new doc.defaultView.KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true,cancelable:true});trigger.dispatchEvent(event);assert.equal(event.defaultPrevented,false);assert.equal(doc.querySelector('#experience').classList.contains('zen'),false);
+});
+
+
+test('cold startup reserves thumbnail skeletons before the catalog returns and replaces them afterward',async t=>{
+ let observed=false;const {doc,strip}=await boot(t,{onCatalogRequest(doc){observed=true;const strip=doc.querySelector('#filmstrip');assert.equal(strip.getAttribute('aria-busy'),'true');assert.equal(strip.querySelectorAll('.film-skeleton').length,12);assert.equal(strip.textContent,'');assert.equal(strip.querySelector('button'),null)}});
+ assert.equal(observed,true);assert.equal(strip.getAttribute('aria-busy'),'false');assert.equal(doc.querySelectorAll('.film-skeleton').length,0);assert.equal(doc.querySelectorAll('.film[data-index]').length,24);
+});
+test('thumbnail skeletons clear independently on load or failure without changing selection',async t=>{
+ const {doc}=await boot(t),first=doc.querySelector('.film[data-index="0"]'),second=doc.querySelector('.film[data-index="1"]');assert.equal(first.classList.contains('is-loading'),true);assert.equal(second.classList.contains('is-loading'),true);
+ first.querySelector('img').dispatchEvent(new doc.defaultView.Event('load'));assert.equal(first.classList.contains('is-loading'),false);assert.equal(second.classList.contains('is-loading'),true);assert.equal(first.getAttribute('aria-pressed'),'true');
+ second.querySelector('img').dispatchEvent(new doc.defaultView.Event('error'));assert.equal(second.classList.contains('is-loading'),false);assert.equal(first.getAttribute('aria-pressed'),'true');
 });

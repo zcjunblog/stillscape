@@ -75,10 +75,9 @@ dialog{margin:auto;border:1px solid #d6e4d426;background:rgba(14,25,30,.94);colo
 .friend-links>summary:focus-visible{outline:2px solid #e2ead4;outline-offset:4px}
 .friend-panel{position:absolute;right:0;bottom:calc(100% + 10px);width:280px;max-width:calc(100vw - 44px);max-height:min(360px,calc(100svh - 130px));overflow:auto;padding:9px;border:1px solid #d1e2d52e;border-radius:12px;background:linear-gradient(140deg,#d6ece50a,transparent 65%),#102026f5;color:#edf3e9;backdrop-filter:blur(24px);box-shadow:inset 0 1px 0 #ffffff0c,0 12px 45px #020b1273}
 .friend-panel-title{margin:5px 12px 8px;font-size:11px;letter-spacing:1px;color:#c1d1c6}
-.friend-panel .friend-entry{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:62px;padding:11px 13px;border-radius:7px;text-align:left}
+.friend-panel .friend-entry{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;padding:11px 13px;border-radius:7px;text-align:left}
 .friend-entry>span{display:flex;flex-direction:column;gap:4px;min-width:0}
 .friend-entry strong{font-size:14px;font-weight:450;line-height:1.4;color:#edf3e9}
-.friend-entry small{font-size:12px;line-height:1.4;color:#b9cbc1}
 .friend-entry svg{width:14px;height:14px;transform:rotate(-40deg);color:#c4d6c9}
 .friend-links[open] .friend-panel{animation:friend-panel-in 180ms var(--ease) both}
 @keyframes friend-panel-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
@@ -91,3 +90,7 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
 /* Cached thumbnails bridge an uncached selection, then dissolve into the full image. */
 .scene-frame>.scene-photo{position:absolute;inset:0}
 .scene-photo-preview{filter:blur(6px)}
+
+/* Reserve the same frame from first paint until each thumbnail arrives. */
+.film-skeleton,.film.is-loading{opacity:1;pointer-events:none;background:linear-gradient(125deg,#21383d,#172b31)}.film-skeleton:before,.film.is-loading:before{content:"";position:absolute;inset:0;z-index:2;background:linear-gradient(100deg,transparent 20%,#d9ece514 50%,transparent 80%);transform:translateX(-100%);animation:skeleton-sweep 1800ms var(--ease) infinite;pointer-events:none}.film.is-loading{pointer-events:auto}.film.is-loading img,.film.is-loading .film-label{opacity:0}.film img{transition:opacity 280ms var(--ease),transform 650ms var(--ease),filter 450ms}.film-label{transition:opacity 280ms var(--ease)}
+@media(prefers-reduced-motion:reduce){.film-skeleton:before,.film.is-loading:before{animation:none;background:none}.film img,.film-label{transition:none}}
