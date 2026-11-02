@@ -8,9 +8,15 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE) [![PHP ≥ 8.1](https://img.shields.io/badge/PHP-8.1%2B-777bb4.svg?style=flat-square)](https://www.php.net/) [![JavaScript: Vanilla](https://img.shields.io/badge/JavaScript-Vanilla-f7df1e.svg?style=flat-square)](package.json) [![Build: Node.js 22+](https://img.shields.io/badge/Build-Node.js_22%2B-43853d.svg?style=flat-square)](https://nodejs.org/) [![CI](https://github.com/zcjunblog/stillscape/actions/workflows/ci.yml/badge.svg)](https://github.com/zcjunblog/stillscape/actions/workflows/ci.yml)
 
-[在线体验](https://xss6.com/stillscape/) · [下载部署包](https://github.com/zcjunblog/stillscape/releases/latest) · [三步部署](#三步部署) · [开发文档](#开发与构建) · [反馈问题](https://github.com/zcjunblog/stillscape/issues)
+[在线体验](https://xss6.com/stillscape/) · [下载部署包](https://github.com/zcjunblog/stillscape/releases/latest) · [Sitecraft 设计 Skill](https://github.com/zcjunblog/sitecraft#readme) · [三步部署](#三步部署) · [开发文档](#开发与构建) · [反馈问题](https://github.com/zcjunblog/stillscape/issues)
 
 </div>
+
+> **推荐设计 Skill：[Sitecraft](https://github.com/zcjunblog/sitecraft#readme)**
+>
+> 想借助 AI 制作有品牌感的官网或静态页面，可以试试作者已开源的 Sitecraft。它将参考分析、构图与素材、交互与动效、手机适配和发布检查整理为可复用的设计工作流；拾景的视觉与交互打磨使用了它的早期版本。
+>
+> [安装与使用示例 →](https://github.com/zcjunblog/sitecraft#安装)
 
 <p align="center">
   <a href="https://xss6.com/stillscape/">
@@ -144,11 +150,9 @@ Stillscape 的页面布局、视觉样式、动画交互及 Node.js / PHP 服务
 
 ### 自有设计 Skill
 
-网站的视觉设计、Motion 动效、光影效果与界面打磨，使用作者自有的 **「官网设计」Skill（`guanwang`，早期名称 `website-ui-craft`）**，配合 Codex 完成设计与开发。
+网站的视觉设计、Motion 动效、光影效果与界面打磨，使用了作者自有设计 Skill 的早期版本，配合 Codex 完成。该 Skill 现已以 **[Sitecraft](https://github.com/zcjunblog/sitecraft#readme)** 的正式名称独立开源，提供安装方法、使用示例与设计工作流说明。
 
-该 Skill 计划独立开源，**正式发布后将在此补充 GitHub 链接**。Skill 本体未包含在本仓库中，其许可与使用文档以未来的独立仓库为准。
-
-<!-- SKILL_REPOSITORY_URL: TODO — 官网设计 Skill 开源后，在此补充正式 GitHub 链接。 -->
+推荐在制作品牌官网、静态页面，或继续调整此类界面的设计与动效时使用。Skill 本体未包含在本仓库中，其许可与使用文档以 [Sitecraft 仓库](https://github.com/zcjunblog/sitecraft) 为准。
 
 ## 版权与许可
 

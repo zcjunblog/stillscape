@@ -32,7 +32,7 @@
 
 ## 4. 设计 Skill 与开发工具
 
-网站设计与界面打磨使用项目作者自有的「官网设计」Skill（`guanwang`，早期名称 `website-ui-craft`），配合 Codex 完成。该 Skill 计划独立开源，目前未包含在本仓库，其后续链接见 [README 的设计 Skill 说明](https://github.com/zcjunblog/stillscape#自有设计-skill)。
+网站设计与界面打磨使用项目作者自有设计 Skill 的早期版本，配合 Codex 完成。该 Skill 现已以 **[Sitecraft](https://github.com/zcjunblog/sitecraft#readme)** 的正式名称独立开源。本仓库不包含 Skill 本体；其安装方法、示例和许可见 Sitecraft 仓库。
 
 第三方开发依赖以 `package.json`、`package-lock.json` 记录为准，各依赖遵循其自身许可证。本项目名称以外的第三方名称与标识归各自权利人所有。
 
