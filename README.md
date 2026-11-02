@@ -79,7 +79,9 @@ HOST=0.0.0.0 PORT=4178 npm start
 
 音频使用用户指定的[原始 MP3](https://static.yiyitu.net/wp-content/uploads/2020/09/1609253354fcdf.mp3)，在项目中保存为 `assets/ambient-music.mp3`。约 15 分 16 秒、7 MB，保留原始文件；仅点击音乐开关后加载，不计入首页必需资源。
 
-底部 GitHub 图标链接本仓库，友情链接：[nav.gs](https://nav.gs/)。
+底部 GitHub 图标链接本仓库；“友情链接”可展开多个站点，目前包含 [nav.gs](https://nav.gs/) 和 [关于我们 · jkhcz.com](https://jkhcz.com/)。支持键盘展开、Escape 收起和点击外部关闭。
+
+增加站点时，在 `index.html` 的 `#friend-links .friend-panel` 内追加 `.friend-entry` 链接即可；列表超出高度会内部滚动，页脚入口宽度保持不变。
 
 ## 许可与素材
 

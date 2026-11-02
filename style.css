@@ -61,14 +61,29 @@ dialog{margin:auto;border:1px solid #d6e4d426;background:rgba(14,25,30,.94);colo
 @media(max-width:760px){.top-tools>.icon-button{width:44px;height:44px}.top-tools{gap:0;margin-left:0}.masthead{gap:8px}}
 @media(prefers-reduced-motion:reduce){.music-toggle[aria-pressed="true"] .sound-wave i{animation:none;transform:scaleY(1)}}
 
+/* The footer keeps a compact trigger while the list can grow independently. */
+.screen-footer{z-index:4}
 .footer-links{display:flex;align-items:center;gap:14px;color:#c4d1cb}
-.footer-links a{display:inline-flex;align-items:center;justify-content:center;min-height:32px;transition:color 180ms,opacity 180ms}
+.footer-links a{display:inline-flex;align-items:center;justify-content:center;min-height:32px;transition:color 180ms,background 180ms}
 .footer-links .github-link{width:32px}.github-link svg{width:17px;height:17px}
 .footer-divider{height:12px;width:1px;background:#d2e0d333}
-.friend-link{gap:7px;font-size:11px;letter-spacing:.5px}.friend-link>span{color:#aebfb6;font-size:10px}
-.friend-link svg{width:12px;height:12px;transform:rotate(-40deg);opacity:.7}
-@media(hover:hover){.footer-links a:hover{color:#fff}.footer-links a:hover svg{opacity:1}}
-@media(max-width:760px){.footer-links{gap:8px}.footer-links a{min-height:36px}.footer-links .github-link{width:32px}.friend-link{font-size:11px;gap:5px}.friend-link>span{display:none}.friend-link svg{width:11px;height:11px}.screen-footer{bottom:12px}}
+.friend-links{position:relative;letter-spacing:.3px}
+.friend-links>summary{display:flex;align-items:center;gap:8px;min-height:36px;cursor:pointer;list-style:none;font-size:12px;color:#d5e0d8;border-radius:4px}
+.friend-links>summary::-webkit-details-marker{display:none}.friend-links>summary::marker{content:''}
+.friend-links>summary svg{width:13px;height:13px;transform:rotate(90deg);transition:transform 180ms var(--ease)}
+.friend-links[open]>summary svg{transform:rotate(270deg)}
+.friend-links>summary:focus-visible{outline:2px solid #e2ead4;outline-offset:4px}
+.friend-panel{position:absolute;right:0;bottom:calc(100% + 10px);width:280px;max-width:calc(100vw - 44px);max-height:min(360px,calc(100svh - 130px));overflow:auto;padding:9px;border:1px solid #d1e2d52e;border-radius:12px;background:linear-gradient(140deg,#d6ece50a,transparent 65%),#102026f5;color:#edf3e9;backdrop-filter:blur(24px);box-shadow:inset 0 1px 0 #ffffff0c,0 12px 45px #020b1273}
+.friend-panel-title{margin:5px 12px 8px;font-size:11px;letter-spacing:1px;color:#c1d1c6}
+.friend-panel .friend-entry{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:62px;padding:11px 13px;border-radius:7px;text-align:left}
+.friend-entry>span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.friend-entry strong{font-size:14px;font-weight:450;line-height:1.4;color:#edf3e9}
+.friend-entry small{font-size:12px;line-height:1.4;color:#b9cbc1}
+.friend-entry svg{width:14px;height:14px;transform:rotate(-40deg);color:#c4d6c9}
+.friend-links[open] .friend-panel{animation:friend-panel-in 180ms var(--ease) both}
+@keyframes friend-panel-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@media(hover:hover){.footer-links .github-link:hover,.friend-links>summary:hover{color:#fff}.friend-panel .friend-entry:hover{background:#d5ead60d}}
+@media(max-width:760px){.footer-links{gap:8px}.footer-links a{min-height:36px}.footer-links .github-link{width:32px}.friend-links>summary{font-size:12px;gap:6px;min-height:36px}.screen-footer{bottom:12px}.friend-panel{bottom:calc(100% + 8px)}}
 /* Keep drag-selection highlights out of the scenery; search stays editable. */
 body{-webkit-user-select:none;user-select:none}
 input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:text}

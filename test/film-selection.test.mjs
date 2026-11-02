@@ -102,3 +102,12 @@ test('a failed full image keeps the preview usable and can be retried',async t=>
  const app=await boot(t),failed=app.holdImage(10),thumb=app.doc.querySelector('.film[data-index="10"] img');Object.defineProperty(thumb,'complete',{value:true});Object.defineProperty(thumb,'naturalWidth',{value:320});app.doc.querySelector('.film[data-index="10"]').click();failed.reject(Error('image failed'));await tick();await tick();assert.equal(app.doc.querySelector('#scene-position').textContent,'11');assert.equal(app.doc.querySelector('.scene-frame.current img').getAttribute('src'),records[10].thumb);
  const retry=app.holdImage(10);app.doc.querySelector('.film[data-index="10"]').click();retry();await until(()=>app.doc.querySelector('.scene-frame.current img').getAttribute('src')===records[10].image);
 });
+
+test('the friend list closes on outside click and Escape restores its trigger focus',async t=>{
+ const {doc}=await boot(t),list=doc.querySelector('#friend-links'),trigger=list?.querySelector('summary');assert.ok(trigger,'the friend list has an accessible native trigger');
+ trigger.click();assert.equal(list.open,true);doc.body.click();assert.equal(list.open,false);
+ trigger.click();const first=list.querySelector('a');first.focus();first.dispatchEvent(new doc.defaultView.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));assert.equal(list.open,false);assert.strictEqual(doc.activeElement,trigger);
+});
+test('Space on the friend trigger remains available to native disclosure behavior',async t=>{
+ const {doc}=await boot(t),trigger=doc.querySelector('#friend-links summary');assert.ok(trigger);const event=new doc.defaultView.KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true,cancelable:true});trigger.dispatchEvent(event);assert.equal(event.defaultPrevented,false);assert.equal(doc.querySelector('#experience').classList.contains('zen'),false);
+});
