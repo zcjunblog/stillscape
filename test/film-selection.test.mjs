@@ -6,15 +6,18 @@ import {JSDOM} from 'jsdom';
 
 const records=Array.from({length:120},(_,i)=>({id:`360:${1000+i}`,source:'360',sourceId:String(1000+i),category:'9',name:`风景 ${i+1}`,tags:['风景',String(i+1)],width:2560,height:1440,resolution:'2560 × 1440',quality:'QHD',original:`https://p2.qhimg.com/bdr/__85/t01${1000+i}.jpg`,image:`https://p2.qhimg.com/bdm/1920_1080_85/t01${1000+i}.jpg`,thumb:`https://p2.qhimg.com/bdm/320_200_75/t01${1000+i}.jpg`,credit:'图片来源：360 壁纸',createdAt:'2022-01-18 12:00:00',downloadable:true}));
 async function until(check){for(let i=0;i<100;i++){if(check())return;await tick()}throw Error('Application did not settle')}
-async function boot(t,{playResult=()=>Promise.resolve()}={}){
+async function boot(t,{playResult=()=>Promise.resolve(),cache=null,storageFails=false}={}){
  const html=await readFile(new URL('../index.html',import.meta.url),'utf8');
  const dom=new JSDOM(html,{url:'http://localhost:4178/',pretendToBeVisual:true});const {window}=dom,doc=window.document;
+ if(cache!==null)window.localStorage.setItem('stillscape-api-cache-v1',JSON.stringify(cache));
+ if(storageFails)window.Storage.prototype.setItem=function(){throw Error('Quota exceeded')};
+ const requests=[];
  const originals=new Map();let disposed=false;const timers=new Set(),gates=new Map();const realSet=globalThis.setTimeout,realClear=globalThis.clearTimeout;
  function install(key,value){originals.set(key,Object.getOwnPropertyDescriptor(globalThis,key));Object.defineProperty(globalThis,key,{value,writable:true,configurable:true})}
  for(const [key,value] of Object.entries({window,document:doc,localStorage:window.localStorage,innerWidth:1440,innerHeight:900,matchMedia:query=>({matches:query.includes('reduced-motion'),addEventListener(){}}),requestAnimationFrame:callback=>realSet(()=>{if(!disposed)callback(performance.now())},0),cancelAnimationFrame:realClear}))install(key,value);
  install('setTimeout',(callback,ms,...args)=>{const timer=realSet(()=>{timers.delete(timer);if(!disposed)callback(...args)},ms);timers.add(timer);return timer});
  install('clearTimeout',timer=>{timers.delete(timer);realClear(timer)});
- install('fetch',async input=>{const url=new URL(String(input),'http://localhost');if(url.pathname==='/api/categories')return Response.json({categories:[{id:'9',name:'风景大片'}]});if(url.pathname==='/api/wallpapers'){const start=Number(url.searchParams.get('start')||0),count=Number(url.searchParams.get('count')||24),items=records.slice(start,start+count);return Response.json({items,total:120,nextStart:start+items.length,hasMore:start+items.length<120})}throw Error('Unexpected fixture request: '+url.pathname)});
+ install('fetch',async input=>{requests.push(String(input));const url=new URL(String(input),'http://localhost');if(url.pathname==='/api/categories')return Response.json({categories:[{id:'9',name:'风景大片'}]});if(url.pathname==='/api/wallpapers'){const start=Number(url.searchParams.get('start')||0),count=Number(url.searchParams.get('count')||24),items=records.slice(start,start+count);return Response.json({items,total:120,nextStart:start+items.length,hasMore:start+items.length<120})}throw Error('Unexpected fixture request: '+url.pathname)});
  install('Image',function(){const image=doc.createElement('img');image.decode=()=>gates.get(image.getAttribute('src'))?.promise||Promise.resolve();return image});
  window.HTMLElement.prototype.animate=function(){return {cancel(){},pause(){},play(){},finished:Promise.resolve()}};
  const paused=new WeakMap();window.HTMLMediaElement.prototype.play=function(){return playResult().then(()=>{paused.set(this,false)})};window.HTMLMediaElement.prototype.pause=function(){paused.set(this,true)};Object.defineProperty(window.HTMLMediaElement.prototype,'paused',{get(){return paused.get(this)??true}});
@@ -22,7 +25,7 @@ async function boot(t,{playResult=()=>Promise.resolve()}={}){
  t.after(async()=>{for(const gate of gates.values())gate.resolve();await tick();await tick();disposed=true;for(const timer of timers)realClear(timer);dom.window.close();for(const [key,descriptor] of originals){if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key]}});
  await import(new URL('../app.js?selection-test='+Math.random(),import.meta.url));
  await until(()=>doc.querySelectorAll('.film').length===24&&doc.querySelector('#scene-position').textContent==='01');
- return {doc,strip,async append(count){doc.querySelector('#film-more').click();await until(()=>doc.querySelectorAll('.film').length===count);await tick()},async choose(index){doc.querySelector(`.film[data-index="${index}"]`).click();await until(()=>Number(doc.querySelector('#scene-position').textContent)===index+1)},holdImage(index){let resolve;const promise=new Promise(r=>resolve=r);const gate={promise,resolve};gates.set(records[index].image,gate);return resolve}};
+ return {doc,strip,requests,storage:window.localStorage,async append(count){doc.querySelector('#film-more').click();await until(()=>doc.querySelectorAll('.film').length===count);await tick()},async choose(index){doc.querySelector(`.film[data-index="${index}"]`).click();await until(()=>Number(doc.querySelector('#scene-position').textContent)===index+1)},holdImage(index){let resolve;const promise=new Promise(r=>resolve=r);const gate={promise,resolve};gates.set(records[index].image,gate);return resolve}};
 }
 
 test('appending a page retains the selected thumbnail node, focus and scroll position',async t=>{
@@ -58,4 +61,21 @@ test('music playback rejection restores the switch and allows retry',async t=>{
 test('turning music off while play is pending prevents late playback',async t=>{
  let release;const started=new Promise(r=>release=r);const {doc}=await boot(t,{playResult:()=>started});const button=doc.querySelector('#music-toggle');assert.ok(button);
  button.click();button.click();release();await tick();await tick();assert.equal(button.getAttribute('aria-pressed'),'false');assert.equal(doc.querySelector('#ambient-audio').paused,true);
+});
+
+const cachedPages=expires=>[
+ {path:'/api/categories',expires,data:{categories:[{id:'9',name:'风景大片'}]}},
+ {path:'/api/wallpapers?category=9&start=0&count=24',expires,data:{items:records.slice(0,24),total:120,nextStart:24,hasMore:true}}
+];
+test('fresh local catalog cache renders the gallery without waiting for API requests',async t=>{
+ const app=await boot(t,{cache:cachedPages(Date.now()+60000)});assert.equal(app.requests.length,0);assert.equal(app.doc.querySelectorAll('.film').length,24);await app.choose(3);assert.equal(app.doc.querySelector('#scene-position').textContent,'04');
+});
+test('expired local catalog entries are refreshed from the API',async t=>{
+ const app=await boot(t,{cache:cachedPages(Date.now()-1)});assert.equal(app.requests.length,2);const stored=JSON.parse(app.storage.getItem('stillscape-api-cache-v1'));assert.ok(stored.every(entry=>entry.expires>Date.now()));
+});
+test('corrupt cached payloads cannot break gallery loading',async t=>{
+ const entries=cachedPages(Date.now()+60000);entries[1].data.items='broken';const app=await boot(t,{cache:entries});assert.equal(app.requests.length,1);assert.equal(app.doc.querySelectorAll('.film').length,24);
+});
+test('unavailable local storage leaves browsing and pagination usable',async t=>{
+ const app=await boot(t,{storageFails:true});await app.append(48);assert.equal(app.doc.querySelectorAll('.film').length,48);
 });

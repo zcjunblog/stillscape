@@ -69,3 +69,6 @@ dialog{margin:auto;border:1px solid #d6e4d426;background:rgba(14,25,30,.94);colo
 .friend-link svg{width:12px;height:12px;transform:rotate(-40deg);opacity:.7}
 @media(hover:hover){.footer-links a:hover{color:#fff}.footer-links a:hover svg{opacity:1}}
 @media(max-width:760px){.footer-links{gap:8px}.footer-links a{min-height:36px}.footer-links .github-link{width:32px}.friend-link{font-size:11px;gap:5px}.friend-link>span{display:none}.friend-link svg{width:11px;height:11px}.screen-footer{bottom:12px}}
+/* Keep drag-selection highlights out of the scenery; search stays editable. */
+body{-webkit-user-select:none;user-select:none}
+input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:text}

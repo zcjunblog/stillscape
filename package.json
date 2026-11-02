@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node server.mjs",
     "test": "node --test test/*.test.mjs",
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "preview": "node dist/shijing/server.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
