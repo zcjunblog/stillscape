@@ -44,16 +44,18 @@ Stillscape 将壁纸浏览、收藏与下载融入同一个全屏界面。风景
 ## 三步部署
 
 1. **开启 PHP**：在网站管理面板中，为站点选择 **PHP 8.1+**，启用 **cURL** 扩展，并确保 HTTPS CA 证书可用。宝塔用户请检查“网站 → PHP 版本”，不能保持“纯静态”。
-2. **构建并上传**：在本机安装 Node.js 22+，下载源码后进入项目目录执行以下命令；将生成的 `dist/php-img/` **里面的全部文件**上传到网站根目录的 `stillscape/` 文件夹。
+2. **构建并上传**：在本机安装 Node.js 22+，下载源码后进入项目目录执行以下命令；将生成的 `dist/php-img/` **里面的全部文件**上传到网站根目录，或任意自行命名的子目录，保持文件与文件夹的相对结构。
 
    ```sh
    npm ci
    npm run build:php
    ```
 
-3. **打开网站**：访问 `https://你的域名/stillscape/`。入口应是 `网站根目录/stillscape/index.html`，API 应返回 JSON；本项目的在线演示为 **[xss6.com/stillscape](https://xss6.com/stillscape/)**。
+3. **打开网站**：上传到根目录就访问 `https://你的域名/`；上传到子目录（例如 `wallpaper/`）就访问 `https://你的域名/wallpaper/`。所选部署目录内应直接包含 `index.html`、`assets/` 和 `api/`，API 应返回 JSON。
 
-**服务器不需要 Node.js、npm、数据库或 API 伪静态规则。** Node.js 仅用于本机构建。PHP 请求使用实际文件 `api/index.php?route=...`，也支持自行更换部署目录名称。
+**不要求固定目录名，也不需要修改路径配置。** 本项目的 [在线演示](https://xss6.com/stillscape/) 使用 `/stillscape/`，仅作为部署示例。
+
+**服务器不需要 Node.js、npm、数据库或 API 伪静态规则。** Node.js 仅用于本机构建。PHP 请求使用相对地址 `api/index.php?route=...`。
 
 连接异常、缓存与 Nginx 排查见 [PHP 部署说明](deploy/php.md)；需要 Node.js 运行方式时参阅 [Node.js 部署说明](deploy/README.md)。
 
